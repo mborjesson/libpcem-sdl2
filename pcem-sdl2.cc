@@ -4,8 +4,8 @@
 #include <SDL2/SDL.h>
 
 extern "C" {
-	#include "pcem.h"
-	#include "pcem-config.h"
+    #include "pcem.h"
+    #include "pcem-config.h"
 }
 
 static SDL_Window *window = NULL;
@@ -28,28 +28,28 @@ static uint8_t* audio_buffer = 0;
 static int audio_buffer_length = 0;
 
 void on_video_size(int width, int height) {
-	printf("Video size changed: %dx%d\n", width, height);
-	screen_width = width;
-	screen_height = height;
-	//SDL_SetWindowSize(window, width, height);
+    printf("Video size changed: %dx%d\n", width, height);
+    screen_width = width;
+    screen_height = height;
+    //SDL_SetWindowSize(window, width, height);
 }
 
 void on_video_blit_draw(int x1, int x2, int y1, int y2, int offset_x, int offset_y, void *buffer, int buffer_width, int buffer_height, int buffer_channels) {
-	SDL_LockMutex(screen_mutex);
-	for (int y = y1; y < y2; ++y) {
-		int start = y * 2048 * 4;
-		if ((offset_y + y) >= 0 && (offset_y + y) < buffer_height) {
-			for (int x = x1; x < x2; ++x) {
-				int p = buffer_channels*(y*buffer_width+offset_x+x);
+    SDL_LockMutex(screen_mutex);
+    for (int y = y1; y < y2; ++y) {
+        int start = y * 2048 * 4;
+        if ((offset_y + y) >= 0 && (offset_y + y) < buffer_height) {
+            for (int x = x1; x < x2; ++x) {
+                int p = buffer_channels*(y*buffer_width+offset_x+x);
 
-				for (int i = 0; i < 3; ++i) {
-					image_buffer[start + 4*x + i] = ((uint8_t*)buffer)[p + i];
-				}
-				image_buffer[start + 4*x + 3] = 0xff;
-			}
-		}
-	}
-	SDL_UnlockMutex(screen_mutex);
+                for (int i = 0; i < 3; ++i) {
+                    image_buffer[start + 4*x + i] = ((uint8_t*)buffer)[p + i];
+                }
+                image_buffer[start + 4*x + 3] = 0xff;
+            }
+        }
+    }
+    SDL_UnlockMutex(screen_mutex);
 }
 
 static const struct {
@@ -174,90 +174,90 @@ int sdl_scancode(SDL_Scancode scancode) {
 }
 
 void on_input_keyboard_poll(void *states) {
-	memcpy(states, keys, 272);
+    memcpy(states, keys, 272);
 }
 
 void on_input_mouse_poll(int *x, int *y, int *z, int *buttons) {
-	if (mousecapture) {
-		uint32_t mb = SDL_GetRelativeMouseState(x, y);
-		*buttons = 0;
-		if (mb & SDL_BUTTON(SDL_BUTTON_LEFT)) {
-			*buttons |= 1;
-		}
-		if (mb & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
-			*buttons |= 2;
-		}
-		if (mb & SDL_BUTTON(SDL_BUTTON_MIDDLE)) {
-			*buttons |= 4;
-		}
-	}
+    if (mousecapture) {
+        uint32_t mb = SDL_GetRelativeMouseState(x, y);
+        *buttons = 0;
+        if (mb & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+            *buttons |= 1;
+        }
+        if (mb & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
+            *buttons |= 2;
+        }
+        if (mb & SDL_BUTTON(SDL_BUTTON_MIDDLE)) {
+            *buttons |= 4;
+        }
+    }
 }
 
 void on_audio_stream_create(int stream, int sample_rate, int sample_size_in_bits, int channels, int buffer_length) {
-	printf("Create audio stream %d: %d hz, %d bits, %d channels (buffer length: %d)\n", stream, sample_rate, sample_size_in_bits, channels, buffer_length);
-	if (audio_device) {
-		SDL_AudioStream *s = SDL_NewAudioStream(AUDIO_S16, channels, sample_rate, AUDIO_S16, 2, 48000);
-		if (s == NULL) {
-			printf("Could not create audio stream: %s\n", SDL_GetError());
-		} else {
-			if (stream == PCEM_AUDIO_STREAM_DEFAULT) {
-				audio_streams[0] = s;
-			} else if (stream == PCEM_AUDIO_STREAM_CD) {
-				audio_streams[1] = s;
-			}
-		}
-	}
+    printf("Create audio stream %d: %d hz, %d bits, %d channels (buffer length: %d)\n", stream, sample_rate, sample_size_in_bits, channels, buffer_length);
+    if (audio_device) {
+        SDL_AudioStream *s = SDL_NewAudioStream(AUDIO_S16, channels, sample_rate, AUDIO_S16, 2, 48000);
+        if (s == NULL) {
+            printf("Could not create audio stream: %s\n", SDL_GetError());
+        } else {
+            if (stream == PCEM_AUDIO_STREAM_DEFAULT) {
+                audio_streams[0] = s;
+            } else if (stream == PCEM_AUDIO_STREAM_CD) {
+                audio_streams[1] = s;
+            }
+        }
+    }
 }
 
 void on_audio_stream_data(int stream, void *buffer, int buffer_length) {
-	if (audio_device) {
-		SDL_AudioStream* s = NULL;
+    if (audio_device) {
+        SDL_AudioStream* s = NULL;
 
-		if (stream == PCEM_AUDIO_STREAM_DEFAULT) {
-			s = audio_streams[0];
-		} else if (stream == PCEM_AUDIO_STREAM_CD) {
-			s = audio_streams[1];
-		}
-		if (s) {
-			int rc = SDL_AudioStreamPut(s, buffer, buffer_length);
-			if (rc == -1) {
-				printf("Could not put audio samples to the stream: %s\n", SDL_GetError());
-			}
-		}
-	}
+        if (stream == PCEM_AUDIO_STREAM_DEFAULT) {
+            s = audio_streams[0];
+        } else if (stream == PCEM_AUDIO_STREAM_CD) {
+            s = audio_streams[1];
+        }
+        if (s) {
+            int rc = SDL_AudioStreamPut(s, buffer, buffer_length);
+            if (rc == -1) {
+                printf("Could not put audio samples to the stream: %s\n", SDL_GetError());
+            }
+        }
+    }
 }
 
 void audio_callback(void* userdata, Uint8* buf, int len) {
-	memset(buf, 0, len);
-	if (audio_buffer_length < len) {
-		audio_buffer_length = len;
-		if (audio_buffer) {
-			free(audio_buffer);
-		}
-		audio_buffer = (uint8_t*) malloc(audio_buffer_length);
-	}
+    memset(buf, 0, len);
+    if (audio_buffer_length < len) {
+        audio_buffer_length = len;
+        if (audio_buffer) {
+            free(audio_buffer);
+        }
+        audio_buffer = (uint8_t*) malloc(audio_buffer_length);
+    }
 
-	for (int i = 0; i < 2; ++i) {
-		if (audio_streams[i]) {
-			int read = SDL_AudioStreamGet(audio_streams[i], audio_buffer, len);
-			if (read > 0) {
-				SDL_MixAudioFormat(buf, audio_buffer, AUDIO_S16, read, SDL_MIX_MAXVOLUME);
-			} else if (read == -1) {
-				printf("Could not mix audio samples: %s\n", SDL_GetError());
-			}
-		}
-	}
+    for (int i = 0; i < 2; ++i) {
+        if (audio_streams[i]) {
+            int read = SDL_AudioStreamGet(audio_streams[i], audio_buffer, len);
+            if (read > 0) {
+                SDL_MixAudioFormat(buf, audio_buffer, AUDIO_S16, read, SDL_MIX_MAXVOLUME);
+            } else if (read == -1) {
+                printf("Could not mix audio samples: %s\n", SDL_GetError());
+            }
+        }
+    }
 }
 
 int main(int argc, char** argv) {
-	int result;
+    int result;
 
-	printf("libpcem SDL2\n");
+    printf("libpcem SDL2\n");
 
-	if (argc != 3) {
-		printf("Usage: <global_config> <machine_config>\n");
-		return 1;
-	}
+    if (argc != 3) {
+        printf("Usage: <global_config> <machine_config>\n");
+        return 1;
+    }
 
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
@@ -275,182 +275,182 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 
-	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     if (renderer == NULL) {
         printf("Could not create renderer: %s\n", SDL_GetError());
         return 3;
     }
 
-	SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 2048, 2048);
+    SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, 2048, 2048);
 
-	image_buffer = (uint8_t*) malloc(2048*2048*4);
-	memset(image_buffer, 0, 2048*2048*4);
+    image_buffer = (uint8_t*) malloc(2048*2048*4);
+    memset(image_buffer, 0, 2048*2048*4);
 
-	screen_mutex = SDL_CreateMutex();
+    screen_mutex = SDL_CreateMutex();
 
-	SDL_AudioSpec want, have;
+    SDL_AudioSpec want, have;
 
-	SDL_memset(&want, 0, sizeof(want));
-	want.freq = 48000;
-	want.format = AUDIO_S16;
-	want.channels = 2;
-	want.samples = 4096;
-	want.callback = audio_callback;
+    SDL_memset(&want, 0, sizeof(want));
+    want.freq = 48000;
+    want.format = AUDIO_S16;
+    want.channels = 2;
+    want.samples = 4096;
+    want.callback = audio_callback;
 
-	audio_device = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
-	if (audio_device == 0) {
-		printf("Failed to open audio: %s\n", SDL_GetError());
-	} else {
-		const char* driver_name = SDL_GetCurrentAudioDriver();
+    audio_device = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+    if (audio_device == 0) {
+        printf("Failed to open audio: %s\n", SDL_GetError());
+    } else {
+        const char* driver_name = SDL_GetCurrentAudioDriver();
 
-		if (driver_name) {
-			printf("Audio initialized, driver: %s\n", driver_name);
-		}
+        if (driver_name) {
+            printf("Audio initialized, driver: %s\n", driver_name);
+        }
 
-		SDL_PauseAudioDevice(audio_device, 0);
-	}
+        SDL_PauseAudioDevice(audio_device, 0);
+    }
 
 
-	for (int i = 0; i < 2; ++i) {
-		audio_streams[i] = 0;
-	}
+    for (int i = 0; i < 2; ++i) {
+        audio_streams[i] = 0;
+    }
 
-	// load configuration read only
-	if (pcem_config_simple_init(argv[1], argv[2], 1)) {
-		printf("Could not load configs.");
-		return 4;
-	}
+    // load configuration read only
+    if (pcem_config_simple_init(argv[1], argv[2], 1)) {
+        printf("Could not load configs.");
+        return 4;
+    }
 
-	// set up callbacks
-	pcem_callback_video_size(on_video_size);
-	pcem_callback_video_blit_draw(on_video_blit_draw);
-	pcem_callback_input_keyboard_poll(on_input_keyboard_poll);
-	pcem_callback_input_mouse_poll(on_input_mouse_poll);
-	pcem_callback_audio_stream_create(on_audio_stream_create);
-	pcem_callback_audio_stream_data(on_audio_stream_data);
+    // set up callbacks
+    pcem_callback_video_size(on_video_size);
+    pcem_callback_video_blit_draw(on_video_blit_draw);
+    pcem_callback_input_keyboard_poll(on_input_keyboard_poll);
+    pcem_callback_input_mouse_poll(on_input_mouse_poll);
+    pcem_callback_audio_stream_create(on_audio_stream_create);
+    pcem_callback_audio_stream_data(on_audio_stream_data);
 
-	// start emulation
-	result = pcem_start();
-	if (result != 0) {
-		printf("Could not start PCem (%d)\n", result);
-		return 5;
-	}
+    // start emulation
+    result = pcem_start();
+    if (result != 0) {
+        printf("Could not start PCem (%d)\n", result);
+        return 5;
+    }
 
-	int running = 1;
+    int running = 1;
 
-	SDL_Event event;
+    SDL_Event event;
 
-	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
 
-	SDL_Rect texture_rect, window_rect;
+    SDL_Rect texture_rect, window_rect;
 
-	texture_rect.x = 0;
-	texture_rect.y = 0;
-	window_rect.x = 0;
-	window_rect.y = 0;
+    texture_rect.x = 0;
+    texture_rect.y = 0;
+    window_rect.x = 0;
+    window_rect.y = 0;
 
-	void* pixels;
-	int pitch;
+    void* pixels;
+    int pitch;
 
-	char title[256];
-	memset(title, 0, 256);
-	int start = SDL_GetTicks();
-	while (running) {
+    char title[256];
+    memset(title, 0, 256);
+    int start = SDL_GetTicks();
+    while (running) {
         while(SDL_PollEvent(&event)) {
                 switch (event.type) {
                 case SDL_WINDOWEVENT: {
-					if (event.window.event == SDL_WINDOWEVENT_CLOSE) running = 0;
-					break;
-				}
-				case SDL_KEYDOWN: {
-					int key_idx = sdl_scancode(event.key.keysym.scancode);
-					if (key_idx != -1)
-						keys[key_idx] = 1;
-					break;
+                    if (event.window.event == SDL_WINDOWEVENT_CLOSE) running = 0;
+                    break;
+                }
+                case SDL_KEYDOWN: {
+                    int key_idx = sdl_scancode(event.key.keysym.scancode);
+                    if (key_idx != -1)
+                        keys[key_idx] = 1;
+                    break;
                 }
                 case SDL_KEYUP: {
-					int key_idx = sdl_scancode(event.key.keysym.scancode);
-					if (key_idx != -1)
-						keys[key_idx] = 0;
-					break;
+                    int key_idx = sdl_scancode(event.key.keysym.scancode);
+                    if (key_idx != -1)
+                        keys[key_idx] = 0;
+                    break;
                 }
-				case SDL_MOUSEBUTTONUP: {
-				    if (!mousecapture) {
-						if (event.button.button == SDL_BUTTON_LEFT) {
-							mousecapture = 1;
-							SDL_GetRelativeMouseState(0, 0);
-			                SDL_SetWindowGrab(window, SDL_TRUE);
-                			SDL_SetRelativeMouseMode(SDL_TRUE);
-						}
-					}
-				}
-				}
-		}
+                case SDL_MOUSEBUTTONUP: {
+                    if (!mousecapture) {
+                        if (event.button.button == SDL_BUTTON_LEFT) {
+                            mousecapture = 1;
+                            SDL_GetRelativeMouseState(0, 0);
+                            SDL_SetWindowGrab(window, SDL_TRUE);
+                            SDL_SetRelativeMouseMode(SDL_TRUE);
+                        }
+                    }
+                }
+                }
+        }
 
-		if (keys[sdl_scancode(SDL_SCANCODE_END)] && keys[sdl_scancode(SDL_SCANCODE_LCTRL)] && mousecapture) {
-			mousecapture = 0;
-			SDL_SetWindowGrab(window, SDL_FALSE);
-			SDL_SetRelativeMouseMode(SDL_FALSE);
-		}
+        if (keys[sdl_scancode(SDL_SCANCODE_END)] && keys[sdl_scancode(SDL_SCANCODE_LCTRL)] && mousecapture) {
+            mousecapture = 0;
+            SDL_SetWindowGrab(window, SDL_FALSE);
+            SDL_SetRelativeMouseMode(SDL_FALSE);
+        }
 
-		SDL_RenderClear(renderer);
+        SDL_RenderClear(renderer);
 
-		texture_rect.w = screen_width;
-		texture_rect.h = screen_height;
+        texture_rect.w = screen_width;
+        texture_rect.h = screen_height;
 
-		SDL_LockTexture(texture, &texture_rect, &pixels, &pitch);
-		SDL_LockMutex(screen_mutex);
-		memcpy(pixels, image_buffer, pitch*texture_rect.h);
-		SDL_UnlockMutex(screen_mutex);
-		SDL_UnlockTexture(texture);
+        SDL_LockTexture(texture, &texture_rect, &pixels, &pitch);
+        SDL_LockMutex(screen_mutex);
+        memcpy(pixels, image_buffer, pitch*texture_rect.h);
+        SDL_UnlockMutex(screen_mutex);
+        SDL_UnlockTexture(texture);
 
-		window_rect.w = window_width;
-		window_rect.h = window_height;
+        window_rect.w = window_width;
+        window_rect.h = window_height;
 
-		SDL_RenderCopy(renderer, texture, &texture_rect, &window_rect);
+        SDL_RenderCopy(renderer, texture, &texture_rect, &window_rect);
 
-		SDL_RenderPresent(renderer);
+        SDL_RenderPresent(renderer);
 
-		int ticks = SDL_GetTicks();
+        int ticks = SDL_GetTicks();
 
-		if (ticks-start >= 1000) {
-			snprintf(title, 255, "libpcem SDL2 (%d%%)", pcem_get_emulation_speed());
-			SDL_SetWindowTitle(window, title);
-			start = ticks;
-		}
+        if (ticks-start >= 1000) {
+            snprintf(title, 255, "libpcem SDL2 (%d%%)", pcem_get_emulation_speed());
+            SDL_SetWindowTitle(window, title);
+            start = ticks;
+        }
 
-		SDL_Delay(1);
-	}
+        SDL_Delay(1);
+    }
 
-	printf("Shutting down...\n");
+    printf("Shutting down...\n");
 
-	// shut down
-	pcem_stop();
-	pcem_config_simple_close();
+    // shut down
+    pcem_stop();
+    pcem_config_simple_close();
 
-	SDL_DestroyMutex(screen_mutex);
-	SDL_DestroyTexture(texture);
-	SDL_DestroyRenderer(renderer);
+    SDL_DestroyMutex(screen_mutex);
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
-	free(image_buffer);
+    free(image_buffer);
 
-	for (int i = 0; i < 2; ++i) {
-		if (audio_streams[i]) {
-			SDL_FreeAudioStream(audio_streams[i]);
-		}
-	}
+    for (int i = 0; i < 2; ++i) {
+        if (audio_streams[i]) {
+            SDL_FreeAudioStream(audio_streams[i]);
+        }
+    }
 
-	SDL_CloseAudioDevice(audio_device);
-	if (audio_buffer) {
-		free(audio_buffer);
-	}
+    SDL_CloseAudioDevice(audio_device);
+    if (audio_buffer) {
+        free(audio_buffer);
+    }
 
     SDL_Quit();
 
-	printf("All done.\n");
+    printf("All done.\n");
 
-	return 0;
+    return 0;
 }
